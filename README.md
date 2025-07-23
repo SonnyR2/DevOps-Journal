@@ -1,84 +1,118 @@
-# Journal API Starter
+# Journal Project
 
-A FastAPI-based journal API that allows storing and retrieving journal entries using PostgreSQL as the database backend. Code for [Phase 3 captstone](https://learntocloud.guide/phase3) 
+My journal project to log daily work, struggles, and intentions. 
+Designed for developers and learners to reflect and track progress.
+
 
 ## Prerequisites
 
-- Python 3.8+
-- PostgreSQL
-- pip (Python package manager)
+- Terraform installed ([install guide](https://learn.hashicorp.com/tutorials/terraform/install-cli))
+- AWS CLI configured with appropriate permissions
+- SSH key pair for access to the API server
+- GitHub account with access to the API repository
+- PostgreSQL user and database ready (can be provisioned via Terraform or externally)
 
-## Environment Setup
 
-1. Clone the repository:
+## API Server Implentation
 
-    ```bash
-    git clone https://github.com/learntocloud/journal-starter.git
-    cd journal-starter
-    ```
+1. **Clone this repository:**
+   ```bash
+   git clone <this_repo_url>
+   cd <this_repo_directory>
 
-2. Create a `.env` file with the following variables:
+2. **Apply Terraform IaC**
+   cd terraform
+   terraform init
+   terraform plan
+   terraform apply
 
-    ``` sh
-        POSTGRES_HOST=<database_private_ip>
-        POSTGRES_PORT=5432
-        POSTGRES_USER=<database_user>
-        POSTGRES_PASSWORD=<database_password>
-        POSTGRES_DB=<database_name>
-        DATABASE_URL=postgresql://<database_user>:<database_password>@<database_private_ip>:5432/<database_name>
-    ```
+3. **Setup API Server**
+   - SSH into server instance
+   - git clone git@github.com:<your_username>/<your_repo>.git
+   - python -m venv venv
+   - source venv/bin/activate or venv\Scripts\activate on Windows
+   - pip install -r requirements.txt
 
-3. Install dependencies:
+   - create a .env file with 
+   POSTGRES_HOST=<replace_with_your_private_ip>
+   POSTGRES_PORT=5432
+   POSTGRES_USER=<name_of_postgres_user>
+   POSTGRES_PASSWORD=<password_of_user>
+   POSTGRES_DB=<name_of_db>
+   DATABASE_URL= postgresql://<name_of_postgres_user>:<password_of_user>@<replace_with_your_private_ip>:5432/<name_of_db>
 
-```bash
-pip install -r requirements.txt
-```
+4. **Setup PostgresDB**
+   - SSM into the database server
+   - sudo apt install -y postgresql postgresql-contrib
 
-## Running the API
+   - Create your database table in postgres
+   - CREATE TABLE entries (
+    id TEXT PRIMARY KEY,
+    data JSONB NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+   );
+   
+5.
+   - run application
+   - fastapi dev main.py
 
-Start the FastAPI server:
-
-```bash
-uvicorn main:app --host 0.0.0.0 --port 8000
-```
-
-## API Endpoints
-
-### GET /entries
-
-Retrieve all journal entries
-
-### POST /entries
-
-Create a new journal entry
-
-```json
+### Example Entry
 {
-    "title": "My Entry",
-    "content": "Today was a good day",
-    "tags": ["daily", "personal"]
+  "work": "Worked on FastAPI routes",
+  "struggle": "Entries not created",
+  "intention": "Fix configuration"
 }
-```
 
-### GET /entries/{entry_id}
+## Development Tasks
 
-Retrieve a specific entry by ID
+### API Implementation
 
-### PUT /entries/{entry_id}
+1. Endpoint in `journal_router.py` have been updated:
+   - GET /entries - List all journal entries
+   - GET /entries/{entry_id} - Get single entry
+   - DELETE /entries/{entry_id} - Delete specific entry
 
-Update an existing entry
+### Logging Setup
 
-### DELETE /entries/{entry_id}
+1. Basic console logging in `main.py`:
+   - Configure basic logging
+   - Set logging level to INFO
+   - Add console handler
 
-Delete an entry
+### Data Model Improvements
 
-## Database Schema
+1. Entry model in `models/entry.py` has been added to `services/entry_service.py`:
+   - Added basic field validation rules
+   - Added input data sanitization
+   - Added schema version tracking
 
-The database uses a single table `entries` with the following structure:
+### Development Environment
 
-| Column      | Type                     | Description            |
-|------------|--------------------------|------------------------|
-| id         | UUID                     | Primary key           |
-| data       | JSONB                    | Entry content         |
-| created_at | TIMESTAMP WITH TIME ZONE | Creation timestamp    |
-| updated_at | TIMESTAMP WITH TIME ZONE | Last update timestamp |
+1. Configure cloud provider CLI in `.devcontainer/devcontainer.json`:
+   - AWSCLI configured along with env variables
+
+
+### Data Schema
+
+The journal entry data model is structured as follows:
+
+| Field       | Type      | Description                                | Validation                   |
+|-------------|-----------|--------------------------------------------|------------------------------|
+| id          | string    | Unique identifier for the entry (UUID)     | Auto-generated UUID          |
+| work        | string    | What did you work on today?                | Required, max 256 characters |
+| struggle    | string    | What's one thing you struggled with today? | Required, max 256 characters |
+| intention   | string    | What will you study/work on tomorrow?      | Required, max 256 characters |
+| created_at  | datetime  | Timestamp when the entry was created       | Auto-generated UTC timestamp |
+| updated_at  | datetime  | Timestamp when the entry was last updated  | Auto-updated UTC timestamp   |
+
+All text fields sanitizatized to prevent injection attacks and ensure data quality. The schema includes version tracking to handle potential future changes to the data structure.
+
+### API Endpoints
+
+1. **GetEntries:** Returns a JSON list of all journal entries - IMPLEMENTED
+2. **GetEntry:** Returns a specific journal entry by ID - IMPLEMENTED
+3. **DeleteEntry:** Removes a specific journal entry - IMPLEMENTED
+4. **CreateEntry:** Creates a new journal entry - IMPLEMENTED
+5. **UpdateEntry:** Updates an existing journal entry - IMPLEMENTED
+6. **DeleteAllEntries:** Removes all journal entries - IMPLEMENTED
