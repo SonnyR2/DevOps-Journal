@@ -3,7 +3,6 @@
 My journal project to log daily work, struggles, and intentions. 
 Designed for developers and learners to reflect and track progress.
 
-
 ## Prerequisites
 
 - Terraform installed ([install guide](https://learn.hashicorp.com/tutorials/terraform/install-cli))
@@ -45,6 +44,18 @@ Designed for developers and learners to reflect and track progress.
    - SSM into the database server
    - sudo apt install -y postgresql postgresql-contrib
 
+=======
+## Local Implentation
+1.
+   - python -m venv venv
+   - source venv/bin/activate or venv\Scripts\activate on Windows
+2.
+   - pip install -r requirements.txt
+3.
+   - create a .env file with 
+   - DATABASE_URL=postgresql://user:password@localhost:5432/devjournal
+4.
+
    - Create your database table in postgres
    - CREATE TABLE entries (
     id TEXT PRIMARY KEY,
@@ -52,7 +63,7 @@ Designed for developers and learners to reflect and track progress.
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
    );
-   
+
 5.
    - run application
    - fastapi dev main.py
@@ -91,7 +102,6 @@ Designed for developers and learners to reflect and track progress.
 
 1. Configure cloud provider CLI in `.devcontainer/devcontainer.json`:
    - AWSCLI configured along with env variables
-
 
 ### Data Schema
 
