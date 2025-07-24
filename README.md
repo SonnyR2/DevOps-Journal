@@ -3,34 +3,78 @@
 My journal project to log daily work, struggles, and intentions. 
 Designed for developers and learners to reflect and track progress.
 
-## Local Implentation
-1.
+
+## Prerequisites
+
+- Terraform installed ([install guide](https://learn.hashicorp.com/tutorials/terraform/install-cli))
+- AWS CLI configured with appropriate permissions
+- SSH key pair for access to the API server
+- GitHub account with access to the API repository
+- PostgreSQL user and database ready (can be provisioned via Terraform or externally)
+
+
+## API Server Implentation
+
+1. **Clone this repository:**
+   ```bash
+   git clone <this_repo_url>
+   cd <this_repo_directory>
+   ```
+2. **Apply Terraform IaC**
+   ```bash
+   cd terraform
+   terraform init
+   terraform plan
+   terraform apply
+   ```
+3. **Setup API Server**
+   - SSH into server instance
+   ```bash
+   - git clone git@github.com:<your_username>/<your_repo>.git
    - python -m venv venv
    - source venv/bin/activate or venv\Scripts\activate on Windows
-2.
    - pip install -r requirements.txt
-3.
+   ```
    - create a .env file with 
-   - DATABASE_URL=postgresql://user:password@localhost:5432/devjournal
-4.
+   ```bash
+   POSTGRES_HOST=<replace_with_your_private_ip>
+   POSTGRES_PORT=5432
+   POSTGRES_USER=<name_of_postgres_user>
+   POSTGRES_PASSWORD=<password_of_user>
+   POSTGRES_DB=<name_of_db>
+   DATABASE_URL=postgresql://<name_of_postgres_user>:<password_of_user>@<replace_with_your_private_ip>:5432/<name_of_db>
+   ```
+4. **Setup PostgresDB**
+   - SSM into the database server
+   - sudo apt install -y postgresql postgresql-contrib
+
    - Create your database table in postgres
-   - CREATE TABLE entries (
+   ```sql
+   CREATE TABLE entries (
     id TEXT PRIMARY KEY,
     data JSONB NOT NULL,
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
    );
-5.
-   - run application
-   - fastapi dev main.py
-
+   ```
+5. **Test API Server Connection to DB**
+   - run application in API Server
+   ```bash
+   fastapi dev main.py
+   curl -X POST http://localhost:8000/entries \
+  -H "Content-Type: application/json" \
+  -d '{
+    "example": "example"
+  }'
+   ```
 ### Example Entry
+```json
 {
   "work": "Worked on FastAPI routes",
   "struggle": "Entries not created",
   "intention": "Fix configuration"
 }
-
+```
 ## Development Tasks
 
 ### API Implementation
@@ -59,7 +103,6 @@ Designed for developers and learners to reflect and track progress.
 1. Configure cloud provider CLI in `.devcontainer/devcontainer.json`:
    - AWSCLI configured along with env variables
 
-## Technical Implementation
 
 ### Data Schema
 
