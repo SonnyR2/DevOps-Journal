@@ -61,11 +61,9 @@ Designed for developers and learners to reflect and track progress.
    - run application in API Server
    ```bash
    fastapi dev main.py
-   curl -X POST http://localhost:8000/entries \
-  -H "Content-Type: application/json" \
-  -d '{
-    "example": "example"
-  }'
+  curl -X POST http://localhost:8000/entries \
+    -H "Content-Type: application/json" \
+    -d '{"example": "example"}'
    ```
 ### Example Entry
 ```json
