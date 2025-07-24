@@ -30,10 +30,10 @@ Designed for developers and learners to reflect and track progress.
 3. **Setup API Server**
    - SSH into server instance
    ```bash
-   - git clone git@github.com:<your_username>/<your_repo>.git
-   - python -m venv venv
-   - source venv/bin/activate or venv\Scripts\activate on Windows
-   - pip install -r requirements.txt
+   git clone git@github.com:<your_username>/<your_repo>.git
+   python -m venv venv
+   source venv/bin/activate or venv\Scripts\activate on Windows
+   pip install -r requirements.txt
    ```
    - create a .env file with 
    ```bash
