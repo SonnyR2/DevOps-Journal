@@ -13,58 +13,53 @@ Designed for developers and learners to reflect and track progress.
 - PostgreSQL user and database ready (can be provisioned via Terraform or externally)
 
 
-## API Server Implentation
+## ECS Cluster Implentation
 
 1. **Clone this repository:**
-   ```bash
-   git clone <this_repo_url>
-   cd <this_repo_directory>
-   ```
-2. **Apply Terraform IaC**
-   ```bash
-   cd terraform
-   terraform init
-   terraform plan
-   terraform apply
-   ```
-3. **Setup API Server**
-   - SSH into server instance
-   ```bash
-   git clone git@github.com:<your_username>/<your_repo>.git
-   python -m venv venv
-   source venv/bin/activate or venv\Scripts\activate on Windows
-   pip install -r requirements.txt
-   ```
-   - create a .env file with 
-   ```bash
-   POSTGRES_HOST=<replace_with_your_private_ip>
-   POSTGRES_PORT=5432
-   POSTGRES_USER=<name_of_postgres_user>
-   POSTGRES_PASSWORD=<password_of_user>
-   POSTGRES_DB=<name_of_db>
-   DATABASE_URL=postgresql://<name_of_postgres_user>:<password_of_user>@<replace_with_your_private_ip>:5432/<name_of_db>
-   ```
-4. **Setup PostgresDB**
-   - SSM into the database server
-   - sudo apt install -y postgresql postgresql-contrib
+```bash
+git clone <this_repo_url>
+cd <this_repo_directory>
+```
+3. **Dockerfile to ECR**
+```bash
+docker build -t journal-app .
+aws ecr get-login-password --region us-east-1 \
+| docker login --username AWS \
+--password-stdin <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
+docker tag journal-app:1.0 <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/journal-app:1.0
+docker push <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/journal-app:1.0
+```
+Ensure image uri is correct in tfvars. 
 
+2. **Apply Terraform IaC**
+```bash
+cd terraform
+terraform init
+terraform plan
+terraform apply
+```
+3. **Setup PostgresDB**
+   - SSM into the database_editor ec2 instance
+```bash
+sudo apt update
+sudo apt install postgresql-client -y
+psql -h <RDS-ENDPOINT> -U <USERNAME> -d <DBNAME>
+```
    - Create your database table in postgres
-   ```sql
-   CREATE TABLE entries (
-    id TEXT PRIMARY KEY,
-    data JSONB NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ NOT NULL
-   );
-   ```
-5. **Test API Server Connection to DB**
+```sql
+CREATE TABLE entries (
+   id TEXT PRIMARY KEY,
+   data JSONB NOT NULL,
+   created_at TIMESTAMPTZ NOT NULL,
+   updated_at TIMESTAMPTZ NOT NULL
+);
+```
+4. **Test Connection to DB**
    - run application in API Server
-   ```bash
-   fastapi dev main.py
-  curl -X POST http://localhost:8000/entries \
-    -H "Content-Type: application/json" \
-    -d '{"example": "example"}'
-   ```
+```bash
+fastapi dev main.py
+curl -X POST http://<RDS-ENDPOINT>/entries/ -H "Content-Type: application/json" -d '{"example": "example"}'
+```
 ### Example Entry
 ```json
 {

@@ -1,25 +1,36 @@
+
 resource "aws_subnet" "public" {
-    count = length(local.public_subnets)
-
-    vpc_id = aws_vpc.vpc.id
-    cidr_block = local.public_subnets[count.index]
-    availability_zone = local.azs[count.index]
-    map_public_ip_on_launch = true
-
-    tags = {
-      Name = "Public-${local.azs[count.index]}"
-    }
-}
-
-resource "aws_subnet" "private" {
-    for_each = local.private_subnets
+    for_each = local.public_subnets
  
     vpc_id = aws_vpc.vpc.id
     cidr_block = each.value.cidr
-    map_public_ip_on_launch = false
+    map_public_ip_on_launch = true
     availability_zone = each.value.az
 
     tags = {
-      Name = "Private-${each.value.az}"
+      Name = "Public-${each.value.az}"
     }
+}
+
+resource "aws_subnet" "db" {
+  for_each = local.db_subnet
+
+  vpc_id = aws_vpc.vpc.id
+  cidr_block = each.value.cidr
+  map_public_ip_on_launch = false
+  availability_zone = each.value.az
+
+  tags = {
+    Name = each.key
+  }
+}
+
+resource "aws_db_subnet_group" "db" {
+  
+  name       = "postgresdb"
+  subnet_ids = [for s in aws_subnet.db : s.id]
+
+  tags = {
+    Name = "postgres"
+  }
 }
