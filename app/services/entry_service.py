@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
 from typing import List, Dict, Any
 import logging
-from api.models.entry import Entry
+from app.models.entry import Entry
 
-from api.repositories.postgres_repository import PostgresDB
+from app.repositories.postgres_repository import PostgresDB
 
 logger = logging.getLogger("journal")
 

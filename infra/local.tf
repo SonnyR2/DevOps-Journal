@@ -1,51 +1,62 @@
 locals {
-    azs = ["us-east-1a", "us-east-1b"]
-    public_subnets = ["10.0.0.0/28", "10.0.0.16/28"]
 
-    private_subnets = {
+    public_subnets = {
 
-        private-1 = {
-            cidr = "10.0.0.32/28"
+        public-1 = {
+            cidr = "10.0.0.0/28"
             az = "us-east-1a"
         }
 
-        private-2 = {
-            cidr = "10.0.0.48/28"
+        public-2 = {
+            cidr = "10.0.0.16/28"
             az = "us-east-1b"            
         }
     }
 
-    security_groups = {
-
-        allow_tls = {
-            description = "Allow TLS/SSH inbound traffic and all outbound traffic"
+    db_subnet = {
+        db-subnet-1 = {
+            cidr = "10.0.0.32/28"
+            az = "us-east-1a"            
         }
 
-        allow_postgres = {
-            description   = "Allow Postgres inbound traffic and all outbound traffic"
+        db-subnet-2 = {
+            cidr = "10.0.0.48/28"
+            az = "us-east-1b"            
+        }
+    }
+}
+
+locals {
+  
+    security_groups = {
+
+        allow_traffic = {
+            description = "Allow HTTP/Postgres inbound traffic and all outbound traffic"
+        }
+
+        db_sg = {
+            description = "Allow Postgres inbound traffic"
         }
     }
 
     ingress = {
-        tls = {
-            from_port = 443
-            to_port   = 443
-            sg_name   = "allow_tls"
+
+        http = {
+            from_port = 80
+            to_port   = 80
+            sg_name   = "allow_traffic"
         }
-        ssh = {
-            from_port = 22
-            to_port   = 22
-            sg_name   = "allow_tls"
-        }
+
         postgres = {
             from_port = 5432
             to_port   = 5432
-            sg_name   = "allow_postgres"
+            sg_name   = "allow_traffic"
         }
-        extra = {
+
+        postgres_db = {
             from_port = 5432
             to_port   = 5432
-            sg_name   = "allow_tls"
-        }  
+            sg_name   = "db_sg"
+        }    
     }
 }

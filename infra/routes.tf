@@ -11,29 +11,29 @@ resource "aws_route_table" "public-routes" {
     } 
 }
 
-resource "aws_route_table" "private-routes" {
-    vpc_id = aws_vpc.vpc.id
-
-    route {
-        cidr_block = "0.0.0.0/0"
-        nat_gateway_id = aws_nat_gateway.nat.id
-    }
-    tags = {
-        Name = "nat-route"
-    } 
-}
-
 resource "aws_route_table_association" "public_zone" {
-    count = length(local.public_subnets)
+    for_each = local.public_subnets
 
-    subnet_id = aws_subnet.public[count.index].id
+    subnet_id = aws_subnet.public[each.key].id
     route_table_id = aws_route_table.public-routes.id
 }
 
-resource "aws_route_table_association" "private_zone" {
-    for_each = local.private_subnets
+resource "aws_route_table" "db" {
+  vpc_id = aws_vpc.vpc.id
 
-    subnet_id = aws_subnet.private[each.key].id
-    route_table_id = aws_route_table.private-routes.id
+  route {
+    cidr_block = aws_vpc.vpc.cidr_block
+    gateway_id = "local"
+  }
+
+  tags = {
+    Name = "db-route-table"
+  }
 }
 
+resource "aws_route_table_association" "db_subnet" {
+for_each = aws_subnet.db
+
+  subnet_id      = aws_subnet.db[each.key].id
+  route_table_id = aws_route_table.db.id
+}
