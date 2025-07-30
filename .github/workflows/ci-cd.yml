@@ -46,8 +46,7 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      image: ${{ steps.build.outputs.image }}
-      test: ${{ steps.build.outputs.test }}
+      image: ${{ steps.export-image.outputs.image }}
 
     steps:
     - name: Checkout code
@@ -73,8 +72,12 @@ jobs:
       run: |
         docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
         docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-        echo "image=$REGISTRY/$REPOSITORY:$IMAGE_TAG" >> "$GITHUB_OUTPUT"
-        echo "test=supduper" >> "$GITHUB_OUTPUT"
+        echo "IMAGE_URI=$REGISTRY/$REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
+
+    - name: Set image output
+      id: export-image
+      run: echo "image=${{ env.IMAGE_URI }}" >> "$GITHUB_OUTPUT"
+
 
   deploy:
     needs: docker-build-push
