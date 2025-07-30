@@ -70,11 +70,16 @@ jobs:
         REPOSITORY: journal-app
         IMAGE_TAG: ${{ github.sha }}
       run: |
+        echo "IMAGE_URI=$IMAGE_URI"
+
         IMAGE_URI="$REGISTRY/$REPOSITORY:$IMAGE_TAG"
         docker build -t "$IMAGE_URI" .
         docker push "$IMAGE_URI"
         echo "image=$IMAGE_URI" >> "$GITHUB_OUTPUT"
-    
+
+    - name: Deploy Task Definition
+      run: echo "Image to deploy is ${{ steps.build.outputs.image }}"
+
 
   deploy:
     needs: docker-build-push
@@ -99,9 +104,8 @@ jobs:
         run: |
           sed -i "s|REPLACE_ME_DATABASE_URL|${{ secrets.DATABASE_URL }}|g" task-definition.json
 
-      - name: Debug build outputs
-        run: |
-          echo "Image output is: ${{ needs.docker-build-push.outputs.image }}"
+      - name: Debug output file
+        run: cat $GITHUB_OUTPUT
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
