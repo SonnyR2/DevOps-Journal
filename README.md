@@ -57,7 +57,6 @@ CREATE TABLE entries (
 4. **Test Connection to DB**
    - run application in API Server
 ```bash
-fastapi dev main.py
 curl -X POST http://<RDS-ENDPOINT>/entries/ -H "Content-Type: application/json" -d '{"example": "example"}'
 ```
 ### Example Entry

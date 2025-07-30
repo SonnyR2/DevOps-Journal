@@ -1,0 +1,111 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-run:
+    name: Docker Image test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t app-test .
+
+      - name: Run container in background
+        run: docker run -d -p 8000:80 --name app-test app-test
+
+      - name: Wait for the app to start
+        run: |
+          echo "Waiting for FastAPI app to start..."
+          sleep 5
+
+      - name: Send test request to FastAPI app
+        run: |
+          curl --fail http://localhost:8000 || (echo "App failed to respond" && exit 1)
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f app-test || true
+
+  docker-build-push:
+    name: Push Docker Image to ECR
+    needs: build-run
+    runs-on: ubuntu-latest
+
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4.10
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{secrets.AWS_REGION}}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build, tag, and push docker image to Amazon ECR
+      id: build
+      env:
+        REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        REPOSITORY: journal-app
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+  deploy:
+    needs: docker-build-push
+    runs-on: ubuntu-latest
+    environment: deploy
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4.10
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{secrets.AWS_REGION}}
+
+      - name: Replace execution role ARN in task definition
+        run: |
+          sed -i "s|REPLACE_ME_EXEC_ROLE|${{ secrets.ECS_EXECUTION_ROLE_ARN }}|g" task-definition.json
+
+      - name: Replace DATABASE_URL placeholder
+        run: |
+          sed -i "s|REPLACE_ME_DATABASE_URL|${{ secrets.DATABASE_URL }}|g" task-definition.json
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: journal-container
+          image: ${{ needs.docker-build-push.outputs.image }}
+
+      - name: Deploy to Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: journal-service
+          cluster: journal-cluster
+          wait-for-service-stability: true
