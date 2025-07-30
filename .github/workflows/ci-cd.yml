@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      image: ${{ steps.export-image.outputs.image }}
+      image: ${{ steps.build.outputs.image }}
 
     steps:
     - name: Checkout code
@@ -70,14 +70,11 @@ jobs:
         REPOSITORY: journal-app
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-        docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-        echo "IMAGE_URI=$REGISTRY/$REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
-
-    - name: Set image output
-      id: export-image
-      run: echo "image=${{ env.IMAGE_URI }}" >> "$GITHUB_OUTPUT"
-
+        IMAGE_URI="$REGISTRY/$REPOSITORY:$IMAGE_TAG"
+        docker build -t "$IMAGE_URI" .
+        docker push "$IMAGE_URI"
+        echo "image=$IMAGE_URI" >> "$GITHUB_OUTPUT"
+    
 
   deploy:
     needs: docker-build-push
@@ -104,7 +101,7 @@ jobs:
 
       - name: Debug build outputs
         run: |
-          echo "Image output is: ${{ needs.docker-build-push.outputs.test }}"
+          echo "Image output is: ${{ needs.docker-build-push.outputs.image }}"
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
