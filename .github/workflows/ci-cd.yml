@@ -31,6 +31,9 @@ jobs:
       - name: Send test request to FastAPI app
         run: |
           curl --fail http://localhost:8000/ || (echo "App failed to respond" && exit 1)
+      
+      - name: Container logs
+        run: docker logs app-test
 
       - name: Cleanup
         if: always()
