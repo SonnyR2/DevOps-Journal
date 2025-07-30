@@ -47,6 +47,7 @@ jobs:
 
     outputs:
       image: ${{ steps.build.outputs.image }}
+      test: ${{ steps.build.outputs.test }}
 
     steps:
     - name: Checkout code
@@ -73,6 +74,7 @@ jobs:
         docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
         docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
         echo "image=$REGISTRY/$REPOSITORY:$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+        echo "test=supduper" >> "$GITHUB_OUTPUT"
 
   deploy:
     needs: docker-build-push
@@ -100,7 +102,7 @@ jobs:
 
       - name: Debug build outputs
         run: |
-          echo "Image output is: ${{ needs.docker-build-push.outputs.image }}"
+          echo "Image output is: ${{ needs.docker-build-push.outputs.test }}"
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
