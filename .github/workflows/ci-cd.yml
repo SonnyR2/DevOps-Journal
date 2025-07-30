@@ -30,7 +30,7 @@ jobs:
 
       - name: Send test request to FastAPI app
         run: |
-          curl --fail http://localhost:8000 || (echo "App failed to respond" && exit 1)
+          curl --fail http://localhost:8000/ || (echo "App failed to respond" && exit 1)
 
       - name: Cleanup
         if: always()
