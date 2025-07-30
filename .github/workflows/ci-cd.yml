@@ -45,9 +45,6 @@ jobs:
     needs: build-run
     runs-on: ubuntu-latest
 
-    outputs:
-      image: ${{ steps.build.outputs.image }}
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -75,7 +72,14 @@ jobs:
         IMAGE_URI="$REGISTRY/$REPOSITORY:$IMAGE_TAG"
         docker build -t "$IMAGE_URI" .
         docker push "$IMAGE_URI"
-        echo "image=$IMAGE_URI" >> "$GITHUB_OUTPUT"
+        echo "$IMAGE_URI" > image_uri.txt
+
+    - name: Upload image URI artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: image-uri
+        path: image_uri.txt
+        retention-days: 1
 
     - name: Deploy Task Definition
       run: echo "Image to deploy is ${{ steps.build.outputs.image }}"
@@ -104,18 +108,26 @@ jobs:
         run: |
           sed -i "s|REPLACE_ME_DATABASE_URL|${{ secrets.DATABASE_URL }}|g" task-definition.json
 
-      - name: Debug output file
-        run: cat $GITHUB_OUTPUT
+      - name: Download image URI artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: image-uri
+          path: .
+
+      - name: Read image URI and deploy
+        id: read-image
+        run: |
+          IMAGE_URI=$(cat image_uri.txt)
+          echo "Deploying image $IMAGE_URI"
+          echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
-        env:
-          image: ${{ needs.docker-build-push.outputs.image }}
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
           container-name: journal-container
-          image: ${{ needs.docker-build-push.outputs.image }}
+          image: ${{ steps.read-image.outputs.image }}
 
       - name: Deploy to Amazon ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
