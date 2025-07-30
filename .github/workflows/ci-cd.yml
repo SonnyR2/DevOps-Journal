@@ -79,7 +79,6 @@ jobs:
   deploy:
     needs: docker-build-push
     runs-on: ubuntu-latest
-    environment: deploy
 
     steps:
       - name: Checkout code
