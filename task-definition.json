@@ -1,6 +1,8 @@
 {
   "family": "api-task",
-  "requiresCompatibilities": ["FARGATE"],
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
   "cpu": "256",
   "memory": "512",
   "networkMode": "awsvpc",
@@ -8,7 +10,7 @@
   "containerDefinitions": [
     {
       "name": "journal-container",
-      "image": "app:latest",  // will be replaced in workflow
+      "image": "app:latest",
       "essential": true,
       "portMappings": [
         {
@@ -20,7 +22,7 @@
       "environment": [
         {
           "name": "DATABASE_URL",
-          "value": "postgresql://dbuser:dbpassword@your-db-endpoint.amazonaws.com/dbname"
+          "value": "DATABASE_URL"
         }
       ]
     }
