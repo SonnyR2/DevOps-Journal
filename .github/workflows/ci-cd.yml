@@ -33,6 +33,7 @@ jobs:
           curl --fail http://localhost:8000/ || (echo "App failed to respond" && exit 1)
       
       - name: Container logs
+        if: always()
         run: docker logs app-test
 
       - name: Cleanup
