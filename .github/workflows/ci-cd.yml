@@ -72,7 +72,12 @@ jobs:
       run: |
         docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
         docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-        echo "image=$REGISTRY/$REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+        echo "image=$REGISTRY/$REPOSITORY:$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+
+    - name: Debug build outputs
+      run: |
+        echo "Image output is: ${{ steps.build.outputs.image }}"
+
 
   deploy:
     needs: docker-build-push
@@ -97,6 +102,11 @@ jobs:
       - name: Replace DATABASE_URL placeholder
         run: |
           sed -i "s|REPLACE_ME_DATABASE_URL|${{ secrets.DATABASE_URL }}|g" task-definition.json
+
+      - name: Debug build outputs
+        run: |
+          echo "Image output is: ${{ needs.docker-build-push.outputs.image }}"
+
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
