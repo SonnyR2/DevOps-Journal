@@ -33,7 +33,7 @@ resource "aws_ecs_task_definition" "journal" {
 }
 
 resource "aws_ecs_service" "journal" {
-  name            = "api-service"
+  name            = "journal-service"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.journal.arn
   desired_count   = 1

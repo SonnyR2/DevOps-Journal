@@ -21,7 +21,7 @@ jobs:
         run: docker build -t app-test .
 
       - name: Run container in background
-        run: docker run -d -p 8000:80 --name app-test -e DATABASE_URL=${{ secrets.DATABASE_URL }} app-test
+        run: docker run -d -p 8000:80 --name app-test -e DATABASE_URL=${{ secrets.DATABASE }} app-test
 
       - name: Wait for the app to start
         run: |
@@ -67,7 +67,6 @@ jobs:
         REPOSITORY: journal-app
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        echo "IMAGE_URI=$IMAGE_URI"
 
         IMAGE_URI="$REGISTRY/$REPOSITORY:$IMAGE_TAG"
         docker build -t "$IMAGE_URI" .
