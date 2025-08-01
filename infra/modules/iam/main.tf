@@ -1,5 +1,7 @@
+
 resource "aws_iam_role" "ssm_role" {
-  name = "EC2_SSM_Role"
+  name = "SSM_ROLE"
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
@@ -22,16 +24,17 @@ resource "aws_iam_instance_profile" "ssm_profile" {
   role = aws_iam_role.ssm_role.name
 }
 
+# ECS Task Execution Role
 resource "aws_iam_role" "ecs_task_execution_role" {
   name = "ecsTaskRole"
 
   assume_role_policy = jsonencode({
-    Version = "2012-10-17"
+    Version = "2012-10-17",
     Statement = [{
-      Action = "sts:AssumeRole"
+      Action = "sts:AssumeRole",
       Principal = {
         Service = "ecs-tasks.amazonaws.com"
-      }
+      },
       Effect = "Allow"
     }]
   })

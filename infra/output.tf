@@ -1,3 +1,3 @@
-output "rds_endpoint" {
-  value = aws_db_instance.postgres.endpoint
+output "db_endpoint" {
+  value= module.rds.db_endpoint
 }
