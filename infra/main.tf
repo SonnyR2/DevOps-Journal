@@ -5,18 +5,22 @@ module "vpc" {
 module "security_groups" {
   source = "./modules/security-groups"
 
-  vpc_id = module.vpc.vpc_id
-  vpc_cidr = module.vpc.vpc_id
+  vpc_id   = module.vpc.vpc_id
+  vpc_cidr = module.vpc.vpc_cidr
 }
 
 module "routes" {
   source = "./modules/routes"
 
-  vpc_id = module.vpc.vpc_id
-  vpc_cidr = module.vpc.vpc_id
-  igw_id = module.vpc.igw_id
+  vpc_id         = module.vpc.vpc_id
+  vpc_cidr       = module.vpc.vpc_cidr
+  igw_id         = module.vpc.igw_id
   public_subnets = module.vpc.public_subnet_ids
-  db_subnets = module.vpc.db_subnet_ids
+  db_subnets     = module.vpc.db_subnet_ids
+}
+
+module "iam" {
+  source = "./modules/iam"
 }
 
 module "rds" {
@@ -29,6 +33,18 @@ module "rds" {
   db_subnet_group_name = module.vpc.db_subnet_group_name
 }
 
+module "eks" {
+  source = "./modules/eks"
+
+  subnet_ids         = module.vpc.public_subnet_ids
+  public_access_cidr = var.public_access_cidr
+  cluster_role_arn   = module.iam.cluster_role_arn
+  node_role_arn      = module.iam.node_role_arn
+  eks_principle_arn  = var.principal_arn
+  depends_on         = [module.iam] # This ensures the IAM module runs first
+}
+
+/*
 module "ecs" {
   source = "./modules/ecs"
 
@@ -49,7 +65,4 @@ module "ec2" {
   subnet_id            = module.vpc.public_subnet_ids[0]
   iam_instance_profile = module.iam.ssm_instance_profile_name
 }
-
-module "iam" {
-  source = "./modules/iam"
-}
+*/

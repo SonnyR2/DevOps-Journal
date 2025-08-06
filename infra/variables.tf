@@ -18,3 +18,13 @@ variable "ecr_image" {
   description = "ECR URI"
   type        = string
 }
+
+variable "principal_arn" {
+  description = "IAM role/user arn"
+  type        = string
+}
+
+variable "public_access_cidr" {
+  description = "ip cidr"
+  type        = string
+}
