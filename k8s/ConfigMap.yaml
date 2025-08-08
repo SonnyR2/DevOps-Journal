@@ -3,8 +3,5 @@ kind: ConfigMap
 metadata:
   name: app-config
 data:
-  DB_HOST: mydb.abcd1234.rds.amazonaws.com
-  DB_PORT: "5432"
-  DB_NAME: journal
-  IMAGE_TAG: "v1.2.3"
-  LOG_LEVEL: "debug"
+  RDS_ENDPOINT: DB_ENDPOINT
+  DB_NAME: mydb
