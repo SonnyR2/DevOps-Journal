@@ -80,10 +80,6 @@ jobs:
         path: image_uri.txt
         retention-days: 1
 
-    - name: Deploy Task Definition
-      run: echo "Image to deploy is ${{ steps.build.outputs.image }}"
-
-
   deploy:
     needs: docker-build-push
     runs-on: ubuntu-latest
@@ -99,13 +95,32 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{secrets.AWS_REGION}}
 
-      - name: Replace execution role ARN in task definition
-        run: |
-          sed -i "s|REPLACE_ME_EXEC_ROLE|${{ secrets.ECS_EXECUTION_ROLE_ARN }}|g" task-definition.json
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
 
-      - name: Replace DATABASE_URL placeholder
+      - name: Terraform Init & Apply
         run: |
-          sed -i "s|REPLACE_ME_DATABASE_URL|${{ secrets.DATABASE }}|g" task-definition.json
+          cd infra
+          terraform init
+          terraform apply \
+          -var="db_user=${{ secrets.DB_USER }}" \
+          -var="db_password=${{ secrets.DB_PASS }}" \
+          -var="principal_arn=${{ secrets.PRINCIPAL_ARN }}" \
+          -var="public_access_cidr=${{ secrets.ACCESS_CIDR }}" \
+          -auto-approve
+
+      - name: Get Terraform outputs
+        id: tf-out
+        run: |
+          cd infra
+          echo "rds_endpoint=$(terraform output -raw db_endpoint)" >> $GITHUB_OUTPUT
+          echo "eks_name=$(terraform output -raw eks_cluster_name)" >> $GITHUB_OUTPUT
+          echo "eks_region=$(terraform output -raw vpc_region)" >> $GITHUB_OUTPUT
+
+      - name: Update kubeconfig
+        run: |
+          aws eks --region "${{ steps.tf-out.outputs.eks_region }}" \
+          update-kubeconfig --name "${{ steps.tf-out.outputs.eks_name }}"
 
       - name: Download image URI artifact
         uses: actions/download-artifact@v4
@@ -120,18 +135,22 @@ jobs:
           echo "Deploying image $IMAGE_URI"
           echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
 
-      - name: Fill in the new image ID in the Amazon ECS task definition
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          container-name: journal-container
-          image: ${{ steps.read-image.outputs.image }}
+      - name: Update Kubernetes deployment image
+        run: |
+          IMAGE_URI=$(cat image_uri.txt)
+          sed -i "s|REPLACE_ME_IMAGE|$IMAGE_URI|g" k8s/deployment.yaml
+          sed -i "s/DB_ENDPOINT/${{ steps.tf-out.outputs.rds_endpoint }}/g" k8s/configmap.yaml
 
-      - name: Deploy to Amazon ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-        with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: journal-service
-          cluster: journal-cluster
-          wait-for-service-stability: true
+      - name: K8s Secrets.yaml creation
+        run: |
+          kubectl create secret generic db-secrets \
+          --from-literal=DB_USER=${{ secrets.DB_USER_REPLACE }} \
+          --from-literal=DB_PASSWORD=${{ secrets.DB_PASS_REPLACE }} \
+          --save-config
+
+      - name: Apply manifests
+        run: |
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+
