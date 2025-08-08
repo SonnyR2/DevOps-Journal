@@ -141,7 +141,7 @@ jobs:
           sed -i "s|REPLACE_ME_IMAGE|$IMAGE_URI|g" k8s/deployment.yaml
           sed -i "s/DB_ENDPOINT/${{ steps.tf-out.outputs.rds_endpoint }}/g" k8s/configmap.yaml
 
-      - name: K8s Secrets.yaml creation
+      - name: K8s Secrets creation
         run: |
           kubectl create secret generic db-secrets \
           --from-literal=DB_USER=${{ secrets.DB_USER_REPLACE }} \
