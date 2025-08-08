@@ -17,6 +17,7 @@ variable "db_password" {
 variable "db_name" {
   description = "Database name"
   type        = string
+  default     = "mydb"
 }
 
 variable "ecr_image" {
