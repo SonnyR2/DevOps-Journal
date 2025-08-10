@@ -81,6 +81,7 @@ jobs:
         retention-days: 1
 
   deploy:
+    name: Build Terraform and run EKS
     needs: docker-build-push
     runs-on: ubuntu-latest
 
