@@ -57,7 +57,7 @@ module "ecs" {
   subnet_ids         = module.vpc.public_subnet_ids
   security_group_id  = module.security_groups.security_group_ids["allow_traffic"]
 }
-
+*/
 module "ec2" {
   source = "./modules/ec2"
 
@@ -65,4 +65,3 @@ module "ec2" {
   subnet_id            = module.vpc.public_subnet_ids[0]
   iam_instance_profile = module.iam.ssm_instance_profile_name
 }
-*/

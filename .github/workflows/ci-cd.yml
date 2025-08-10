@@ -54,7 +54,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{secrets.AWS_REGION}}
+        aws-region: ${{ secrets.AWS_REGION }}
 
     - name: Login to Amazon ECR
       id: login-ecr
@@ -94,7 +94,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{secrets.AWS_REGION}}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
@@ -156,5 +156,6 @@ jobs:
           kubectl apply -f k8s/service.yaml
 
       - name: Delete AWS resources
+        if: always()
         run: |
           terraform destroy -auto-approve
