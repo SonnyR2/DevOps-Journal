@@ -19,12 +19,12 @@ variable "db_name" {
   type        = string
   default     = "mydb"
 }
-
+/*
 variable "ecr_image" {
   description = "ECR URI"
   type        = string
 }
-
+*/
 variable "principal_arn" {
   description = "IAM role/user arn"
   type        = string
