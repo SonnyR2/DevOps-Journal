@@ -53,6 +53,11 @@ This repository contains a GitHub Actions workflow to build, test, push, and dep
 | `DB_USER_REPLACE`     | Database username for Kubernetes secret |
 | `DB_PASS_REPLACE`     | Database password for Kubernetes secret |
 
+# Terraform Backend Setup
+
+You need to create an **S3 bucket** to store the Terraform state remotely and enable state locking for concurrency safety.
+View configuration in infra/providers.tf
+
 ---
 
 ## How to use
