@@ -158,5 +158,6 @@ jobs:
       - name: Delete AWS resources
         if: always()
         run: |
+          cd infra
           terraform init
           terraform destroy -auto-approve
