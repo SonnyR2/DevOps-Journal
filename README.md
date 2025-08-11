@@ -3,42 +3,64 @@
 My journal project to log daily work, struggles, and intentions. 
 Designed for developers and learners to reflect and track progress.
 
+This repository contains a GitHub Actions workflow to build, test, push, and deploy a Dockerized FastAPI application to Amazon EKS, along with infrastructure provisioning using Terraform.
+
+## What this pipeline does
+
+1. **Build and test Docker image**  
+   - Checks out the code  
+   - Builds the Docker image  
+   - Runs a container locally in the GitHub runner  
+   - Sends a test request to verify the app is running  
+   - Cleans up the container
+
+2. **Push Docker image to Amazon ECR**  
+   - Logs into AWS ECR  
+   - Builds, tags, and pushes the Docker image with the commit SHA as the tag  
+   - Saves the image URI as an artifact for downstream jobs
+
+3. **Provision AWS infrastructure with Terraform**  
+   - Runs `terraform init` and `terraform apply` inside the `infra/` folder  
+   - Applies variables like DB username, password, and access CIDR from GitHub Secrets  
+   - Outputs RDS endpoint, EKS cluster name, and region
+
+4. **Configure kubectl and deploy the app to EKS**  
+   - Updates kubeconfig with the new EKS cluster details  
+   - Downloads the Docker image URI artifact  
+   - Substitutes the image URI and RDS endpoint in Kubernetes manifests  
+   - Creates Kubernetes secrets for DB credentials  
+   - Applies the Kubernetes manifests (ConfigMap, Deployment, Service)
+
+5. **Optional cleanup step**  
+   - Runs `terraform destroy` at the end if the job finishes (can be disabled)
 
 ## Prerequisites
 
-- Terraform installed ([install guide](https://learn.hashicorp.com/tutorials/terraform/install-cli))
-- AWS CLI configured with appropriate permissions
-- SSH key pair for access to the API server
+- AWS account with permissions to manage EKS, EC2, RDS, ECR, and IAM  
+- RDS PostgreSQL database (the pipeline provisions RDS, but the user still needs to configure the database server manually, e.g., set up schemas, users, etc.)  
 - GitHub account with access to the API repository
-- PostgreSQL user and database ready (can be provisioned via Terraform or externally)
+- GitHub repository with the following secrets configured:
 
+| Secret Name          | Description                          |
+|----------------------|------------------------------------|
+| `AWS_ACCESS_KEY_ID`   | AWS access key                     |
+| `AWS_SECRET_ACCESS_KEY` | AWS secret key                   |
+| `AWS_REGION`          | AWS region (e.g., `us-east-1`)     |
+| `DB_USER`             | Database username for Terraform     |
+| `DB_PASS`             | Database password for Terraform     |
+| `PRINCIPAL_ARN`       | IAM principal ARN for Terraform     |
+| `ACCESS_CIDR`         | CIDR block allowed to access RDS    |
+| `DB_USER_REPLACE`     | Database username for Kubernetes secret |
+| `DB_PASS_REPLACE`     | Database password for Kubernetes secret |
 
-## ECS Cluster Implentation
+---
 
-1. **Clone this repository:**
-```bash
-git clone <this_repo_url>
-cd <this_repo_directory>
-```
-3. **Dockerfile to ECR**
-```bash
-docker build -t journal-app .
-aws ecr get-login-password --region us-east-1 \
-| docker login --username AWS \
---password-stdin <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
-docker tag journal-app:1.0 <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/journal-app:1.0
-docker push <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/journal-app:1.0
-```
-Ensure image uri is correct in tfvars. 
+## How to use
 
-2. **Apply Terraform IaC**
-```bash
-cd terraform
-terraform init
-terraform plan
-terraform apply
-```
-3. **Setup PostgresDB**
+1. Push your code changes to the `main` branch or open a pull request targeting `main`.  
+2. The GitHub Actions workflow will automatically run the pipeline.  
+3. The app will be deployed to the EKS cluster and accessible via the configured service.  
+4. **Manually configure your RDS PostgreSQL database**
    - SSM into the database_editor ec2 instance
 ```bash
 sudo apt update
@@ -53,12 +75,23 @@ CREATE TABLE entries (
    created_at TIMESTAMPTZ NOT NULL,
    updated_at TIMESTAMPTZ NOT NULL
 );
-```
-4. **Test Connection to DB**
-   - run application in API Server
-```bash
-curl -X POST http://<RDS-ENDPOINT>/entries/ -H "Content-Type: application/json" -d '{"example": "example"}'
-```
+
+
+---
+
+## Notes
+
+- The pipeline **installs Terraform and kubectl dynamically** on the runner.  
+- The `terraform destroy` step runs at the end of the deploy job unconditionally (`if: always()`), so your infrastructure will be deleted after deployment unless you remove or comment out that step.  
+- The Kubernetes manifests are templated using `sed` in the workflow — be careful to keep placeholders consistent (`REPLACE_ME_IMAGE` and `DB_ENDPOINT`).  
+- Secrets management is done via GitHub Secrets and Kubernetes Secrets.
+
+---
+
+If you want to **retain the infrastructure**, remove or disable the `terraform destroy` step from the workflow.
+
+---
+
 ### Example Entry
 ```json
 {
