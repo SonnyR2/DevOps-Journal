@@ -5,3 +5,4 @@ metadata:
 data:
   RDS_ENDPOINT: DB_ENDPOINT
   DB_NAME: mydb
+
