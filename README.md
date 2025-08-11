@@ -75,7 +75,7 @@ CREATE TABLE entries (
    created_at TIMESTAMPTZ NOT NULL,
    updated_at TIMESTAMPTZ NOT NULL
 );
-
+```
 
 ---
 
