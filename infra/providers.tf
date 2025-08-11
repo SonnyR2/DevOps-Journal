@@ -14,7 +14,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket         = "tfstoring123"     
-    key            = "test/terraform.tfstate"  # Path inside the bucket for state file
+    key            = "test/terraform.tfstate"  
     region         = "us-east-1"          
     use_lockfile   = true
     encrypt        = true                        
